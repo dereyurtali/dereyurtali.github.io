@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Bring Me Some Space Photo</title>
+
+    <style>
+        body {
+            max-width: 500px;
+            padding-left: 5px;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        img {
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            max-height: 400px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #ffdd57;
+        }
+
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 8px 12px;
+            background-color: #ffdd57;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #e4c23b;
+        }
+
+        #description {
+            text-align: center;
+            padding: 10px;
+        }
+
+        input {
+            display: block;
+            margin: 10px auto;
+            padding: 8px;
+            width: 80%;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body onload="getRandomPhoto()">
+    <h2>Bring Me Some Space Photo</h2>
+
+    <button onclick="getRandomPhoto()">Get Random Space Photo</button>
+    <button onclick="getAstronomyPicture()">NASA Astronomy Picture of the Day</button>
+
+    <div id="photoContainer">
+        <img id="photo" src="" alt="Space Photo">
+        <p id="description"></p>
+    </div>
+
+    <div>
+        <input type="text" id="searchQuery" placeholder="Search for space images...">
+        <button onclick="searchPhotos()">Search</button>
+    </div>
+
+    <script>
+        "use strict";
+
+        const NASA_API_KEY = "nDCc1XQjH52JwnMEuM1fkOfq1EP9pdvWVo5ZAHFw";
+
+        async function toJSON(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            } catch (e) {
+                alert("Failed to fetch data. Please try again later.");
+                console.error(e);
+            }
+        }
+
+        async function getAstronomyPicture() {
+            const url = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`;
+            const data = await toJSON(url);
+
+            if (data) {
+                const imageElement = document.getElementById("photo");
+                const descriptionElement = document.getElementById("description");
+
+                if (data.media_type === "image") {
+                    imageElement.src = data.url;
+                    imageElement.alt = "NASA Astronomy Picture of the Day";
+                    descriptionElement.innerText = formatDescription(data.explanation);
+                } else if (data.media_type === "video") {
+                    imageElement.src = "";
+                    descriptionElement.innerHTML = `${formatDescription(data.explanation)}<br><a href="${data.url}" target="_blank">Watch today's video content here</a>`;
+                }
+            }
+        }
+
+        async function getRandomPhoto() {
+            const query = ["galaxy", "nebula", "stars", "planet", "space"];
+            const randomQuery = query[Math.floor(Math.random() * query.length)];
+
+            const url = `https://images-api.nasa.gov/search?q=${randomQuery}&media_type=image`;
+            const data = await toJSON(url);
+
+            if (data && data.collection.items.length > 0) {
+                const randomImage = data.collection.items[Math.floor(Math.random() * data.collection.items.length)];
+                const imageUrl = randomImage.links[0].href;
+                const description = randomImage.data[0].description || "No description available.";
+
+                const imageElement = document.getElementById("photo");
+                const descriptionElement = document.getElementById("description");
+
+                imageElement.src = imageUrl;
+                imageElement.alt = randomImage.data[0].title;
+                descriptionElement.innerText = formatDescription(description);
+            } else {
+                alert("No images found. Please try again.");
+            }
+        }
+
+        async function searchPhotos() {
+            const query = document.getElementById("searchQuery").value;
+            if (!query) {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            const url = `https://images-api.nasa.gov/search?q=${query}&media_type=image`;
+            const data = await toJSON(url);
+
+            const imageElement = document.getElementById("photo");
+            const descriptionElement = document.getElementById("description");
+
+            if (data && data.collection.items.length > 0) {
+                const randomImage = data.collection.items[Math.floor(Math.random() * data.collection.items.length)];
+                const imageUrl = randomImage.links[0].href;
+                const description = randomImage.data[0].description || "No description available.";
+
+                imageElement.src = imageUrl;
+                imageElement.alt = randomImage.data[0].title;
+                descriptionElement.innerText = formatDescription(description);
+            } else {
+                imageElement.src = "";
+                descriptionElement.innerText = "No results found.";
+            }
+        }
+
+        function formatDescription(description) {
+            const sentences = description.split('. ').slice(0, 3).join('. ') + '.';
+            return sentences;
+        }
+    </script>
+</body>
+
+</html>
